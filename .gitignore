@@ -1,0 +1,19 @@
+# Sensitive Config: Never Push This
+congig/congig.php
+
+# Uploaded Images: Too large for git
+public/assets/images/uploads/
+
+# VS Code Settings
+.vscode/
+
+# Windows system files
+Thumbs.db
+desktop.ini
+
+# Mac system files
+.DS_Store
+
+# XAMPP log files
+*.log
+
