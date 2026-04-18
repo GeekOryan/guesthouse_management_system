@@ -1,7 +1,7 @@
-# Sensitive Config: Never Push This
-congig/congig.php
+# Sensitive Config : Never Push This
+config/config.php
 
-# Uploaded Images: Too large for git
+# Uploaded Images : Too large for git
 public/assets/images/uploads/
 
 # VS Code Settings
@@ -16,4 +16,3 @@ desktop.ini
 
 # XAMPP log files
 *.log
-
