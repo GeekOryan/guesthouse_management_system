@@ -8,7 +8,7 @@ CREATE TABLE admins (
     full_name  VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-,,x                                                                                         x                                                                                           
+
 CREATE TABLE rooms (
     id              INT AUTO_INCREMENT PRIMARY KEY,
     name            VARCHAR(100) NOT NULL,

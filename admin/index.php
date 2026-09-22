@@ -50,7 +50,7 @@ $upcoming = $conn->query("
     LIMIT 5
 ");
 ?>
-
+ 
 <!--STATS CARDS-->
 <div class="row g-4 mb-4">
 
