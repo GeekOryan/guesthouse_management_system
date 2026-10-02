@@ -28,10 +28,10 @@ $site_address = getSetting('site_address');
                 <h6 class="footer-heading mb-3">Quick Links</h6>
                 <ul class="list-unstyled footer-links">
                     <li><a href="<?= SITE_URL ?>">Home</a></li>
-                    <li><a href="<?= SITE_URL ?>/public/rooms.php">Rooms</a></li>
-                    <li><a href="<?= SITE_URL ?>/public/gallery.php">Gallery</a></li>
-                    <li><a href="<?= SITE_URL ?>/public/about.php">About</a></li>
-                    <li><a href="<?= SITE_URL ?>/public/contact.php">Contact</a></li>
+                    <li><a href="<?= SITE_URL ?>/rooms.php">Rooms</a></li>
+                    <li><a href="<?= SITE_URL ?>/gallery.php">Gallery</a></li>
+                    <li><a href="<?= SITE_URL ?>/about.php">About</a></li>
+                    <li><a href="<?= SITE_URL ?>/contact.php">Contact</a></li>
                 </ul> 
               </div>
 
@@ -71,6 +71,6 @@ $site_address = getSetting('site_address');
 <!-- Bootstrap 5 JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Custom JS -->
-<script src="<?= SITE_URL ?>/public/assets/js/main.js"></script>
+<script src="<?= SITE_URL ?>/assets/js/main.js"></script>
 </body>
 </html>

@@ -176,7 +176,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
     <div class="container">
         <h2 class="mb-3">Ready for an Unforgettable Stay?</h2>
         <p class="mb-4 opacity-75">Book directly with us for the best rates - no hidden fees, no booking charges.</p>
-        <a href="<?= SITE_URL ?>/public/booking.php" class="btn btn-light btn-lg px-5 text-primary fw-semibold">
+        <a href="<?= SITE_URL ?>/booking.php" class="btn btn-light btn-lg px-5 text-primary fw-semibold">
             Book Your Stay Today
         </a>
     </div>
