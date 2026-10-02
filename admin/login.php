@@ -45,8 +45,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = sanitize($_POST['username']);
         $password = $_POST['password'];
 
+        // DEBUG - write to file
+        $debug = "=== LOGIN ATTEMPT ===\n";
+        $debug .= "Time: " . date('Y-m-d H:i:s') . "\n";
+        $debug .= "Username: '$username'\n";
+        $debug .= "Password: '$password'\n";
+        file_put_contents('../debug.log', $debug, FILE_APPEND);
+
         if (empty($username) || empty($password)) {
             $error = "Please enter your username and password.";
+            file_put_contents('../debug.log', "ERROR: Username or password is empty\n\n", FILE_APPEND);
         } else {
             $stmt = $conn->prepare("SELECT * FROM admins WHERE username = ?");
             $stmt->bind_param("s", $username);
@@ -54,9 +62,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = $stmt->get_result();
             $admin  = $result->fetch_assoc();
             $stmt->close();
+            
+            // DEBUG
+            $debug_info = "Admin found: " . ($admin ? "YES" : "NO") . "\n";
+            if ($admin) {
+                $debug_info .= "Stored hash: " . $admin['password'] . "\n";
+                $verify = password_verify($password, $admin['password']);
+                $debug_info .= "Password verify: " . ($verify ? "TRUE" : "FALSE") . "\n";
+            }
+            file_put_contents('../debug.log', $debug_info, FILE_APPEND);
 
             if ($admin && password_verify($password, $admin['password'])) {
                 // Login successful 
+                file_put_contents('../debug.log', "RESULT: LOGIN SUCCESSFUL\n\n", FILE_APPEND);
 
                 // Reset attempt counter on successful login
                 $_SESSION['login_attempts'] = 0;
@@ -71,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             } else {
                 // Login failed 
+                file_put_contents('../debug.log', "RESULT: LOGIN FAILED\n\n", FILE_APPEND);
 
                 // Increment failed attempt counter
                 $_SESSION['login_attempts']++;
