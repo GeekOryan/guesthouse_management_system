@@ -1,0 +1,8 @@
+{
+  "name": "geekoryan/guesthouse-management-system",
+  "description": "Guesthouse Management System",
+  "type": "project",
+  "require": {
+    "php": ">=8.0"
+  }
+}
