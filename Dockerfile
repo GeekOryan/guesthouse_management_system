@@ -1,7 +1,10 @@
 # Use official PHP 8.2 with Apache
 FROM php:8.2-apache
 
-# Enable Apache mod_rewrite (good practice for clean URLs)
+# Install the mysqli extension (Fixes the undefined function error)
+RUN docker-php-ext-install mysqli
+
+# Enable Apache mod_rewrite
 RUN a2enmod rewrite
 
 # Set the working directory
@@ -11,10 +14,9 @@ WORKDIR /var/www/html
 COPY . /var/www/html/
 
 # Change Apache's DocumentRoot to the 'public' directory
-# This permanently solves Lesson 3 (folder structure mismatch)
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Expose port 80 (Render will automatically map this)
+# Expose port 80
 EXPOSE 80
 
 # Start Apache
