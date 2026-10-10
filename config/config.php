@@ -2,9 +2,17 @@
 // This is the brain of the app. SAFE TO COMMIT TO GITHUB.
 
 // ==========================================================
-// 1. DYNAMIC SITE URL
+// 1. DYNAMIC SITE URL (Fixes Mixed Content / Styling on Render)
 // ==========================================================
-$protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+// Check if behind a proxy (like Render) or direct HTTPS
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $protocol = 'https';
+} elseif (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+    $protocol = 'https';
+} else {
+    $protocol = 'http';
+}
+
 $host = $_SERVER['HTTP_HOST'];
 
 if (in_array($host, ['localhost', '127.0.0.1'])) {
@@ -21,7 +29,7 @@ if (in_array($host, ['localhost', '127.0.0.1'])) {
 // ==========================================================
 define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.eu-central-1.prod.aws.tidbcloud.com');
 define('DB_USER', getenv('DB_USER') ?: '4XbDHSaMVmT7v4L.root');
-define('DB_PASS', getenv('DB_PASS') ?: 'ZxXGyqb8qthRzwY6'); // <-- PUT YOUR PASSWORD HERE
+define('DB_PASS', getenv('DB_PASS') ?: 'ZxXGyqb8qthRzwY6'); 
 define('DB_NAME', getenv('DB_NAME') ?: 'guesthouse');
 define('DB_PORT', getenv('DB_PORT') ?: '4000');
 
