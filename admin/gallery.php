@@ -1,30 +1,30 @@
 <?php
-// All logic first before any HTML
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/vendor/autoload.php'; // Load Cloudinary SDK
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Cloudinary\Cloudinary;
 use Cloudinary\Configuration\Configuration;
 
-// --- SAFETY CHECK: Verify Environment Variables ---
-$cn = getenv('CLOUDINARY_CLOUD_NAME');
-$ak = getenv('CLOUDINARY_API_KEY');
-$as = getenv('CLOUDINARY_API_SECRET');
+// --- ULTRA-DEBUG SAFETY CHECK ---
+// We use trim() to remove any accidental invisible spaces copied from Render
+$cn = trim(getenv('CLOUDINARY_CLOUD_NAME') ?: '');
+$ak = trim(getenv('CLOUDINARY_API_KEY') ?: '');
+$as = trim(getenv('CLOUDINARY_API_SECRET') ?: '');
 
 if (!$cn || !$ak || !$as) {
     die("<h2 style='color:red;'>CRITICAL: Missing Environment Variables</h2>
          <p>PHP cannot see your Cloudinary credentials. Please check your Render Dashboard.</p>
          <ul>
-         <li>CLOUDINARY_CLOUD_NAME: " . var_export($cn, true) . "</li>
-         <li>CLOUDINARY_API_KEY: " . var_export($ak, true) . "</li>
-         <li>CLOUDINARY_API_SECRET: " . ($as ? '*** EXISTS ***' : var_export($as, true)) . "</li>
+         <li>CLOUDINARY_CLOUD_NAME: '" . htmlspecialchars($cn) . "' (Length: " . strlen($cn) . ")</li>
+         <li>CLOUDINARY_API_KEY: '" . htmlspecialchars($ak) . "' (Length: " . strlen($ak) . ")</li>
+         <li>CLOUDINARY_API_SECRET: '" . ($as ? '*** EXISTS ***' : 'MISSING') . "' (Length: " . strlen($as) . ")</li>
          </ul>
-         <p><strong>Fix:</strong> Go to Render > Environment, delete these 3 variables, and re-add them carefully without any trailing spaces.</p>");
+         <p><strong>Fix:</strong> Go to Render > Environment, delete these 3 variables, and re-add them carefully. Ensure NO spaces before or after the values.</p>");
 }
 
-// Initialize Cloudinary (This will now work 100%)
+// Initialize Cloudinary with the trimmed, clean variables
 Configuration::instance([
     'cloud' => [
         'cloud_name' => $cn,
