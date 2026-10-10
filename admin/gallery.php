@@ -3,22 +3,43 @@
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php'; // Load Cloudinary SDK
 
-session_start();
+use Cloudinary\Cloudinary;
+use Cloudinary\Configuration\Configuration;
 
-//DELETE an image
+// Initialize Cloudinary
+Configuration::instance([
+    'cloud' => [
+        'cloud_name' => getenv('CLOUDINARY_CLOUD_NAME'),
+        'api_key'    => getenv('CLOUDINARY_API_KEY'),
+        'api_secret' => getenv('CLOUDINARY_API_SECRET'),
+    ],
+]);
+$cloudinary = new Cloudinary();
+
+// DELETE an image
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
 
-    // Get image path first so we can delete the file too
+    // Get image URL from database
     $result = $conn->query("SELECT image_path FROM gallery WHERE id = $id");
     if ($result->num_rows > 0) {
         $image = $result->fetch_assoc();
-        $file  = UPLOAD_PATH . '/' . $image['image_path'];
+        $image_url = $image['image_path'];
 
-        // Delete physical file from server if it exists
-        if (file_exists($file)) {
-            unlink($file);
+        // If it's a Cloudinary URL, delete from Cloudinary
+        if (strpos($image_url, 'cloudinary.com') !== false) {
+            try {
+                // Extract public_id from URL
+                preg_match('/upload\/v\d+\/(.+)$/', $image_url, $matches);
+                if (isset($matches[1])) {
+                    $public_id = $matches[1];
+                    $cloudinary->uploadApi()->destroy($public_id);
+                }
+            } catch (Exception $e) {
+                // Silently continue even if Cloudinary delete fails
+            }
         }
 
         // Delete record from database
@@ -34,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $caption    = sanitize($_POST['caption']);
     $sort_order = (int)$_POST['sort_order'];
     $upload_ok  = false;
-    $filename   = '';
+    $image_url  = '';
 
     if (isset($_FILES['image']) && $_FILES['image']['error'] === 0) {
         $file     = $_FILES['image'];
@@ -47,19 +68,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($file['size'] > $max_size) {
             $error = "Image must be under 5MB.";
         } else {
-            // Generate unique filename so files never overwrite each other
-            $filename  = uniqid('gallery_') . '.' . $ext;
-            $dest      = UPLOAD_PATH . '/' . $filename;
-
-            // Create uploads folder if it doesn't exist yet
-            if (!is_dir(UPLOAD_PATH)) {
-                mkdir(UPLOAD_PATH, 0755, true);
-            }
-
-            if (move_uploaded_file($file['tmp_name'], $dest)) {
+            try {
+                // Upload to Cloudinary
+                $uploadResult = $cloudinary->uploadApi()->upload($file['tmp_name'], [
+                    'folder' => 'guesthouse/gallery',
+                    'public_id' => 'gallery_' . uniqid(),
+                    'overwrite' => false,
+                    'resource_type' => 'image'
+                ]);
+                
+                $image_url = $uploadResult['secure_url'];
                 $upload_ok = true;
-            } else {
-                $error = "Upload failed. Please try again.";
+            } catch (Exception $e) {
+                $error = "Upload failed: " . $e->getMessage();
             }
         }
     } else {
@@ -71,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             INSERT INTO gallery (image_path, caption, sort_order)
             VALUES (?, ?, ?)
         ");
-        $stmt->bind_param("ssi", $filename, $caption, $sort_order);
+        $stmt->bind_param("ssi", $image_url, $caption, $sort_order);
         $stmt->execute();
         $stmt->close();
 
@@ -104,7 +125,7 @@ $images = $conn->query("SELECT * FROM gallery ORDER BY sort_order ASC, created_a
 
 <?php if (isset($error)): ?>
 <div class="alert alert-danger alert-dismissible fade show mb-4">
-    <i class="bi bi-exclamation-triangle me-2"></i><?= $error ?>
+    <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($error) ?>
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 <?php endif; ?>
@@ -131,15 +152,21 @@ $images = $conn->query("SELECT * FROM gallery ORDER BY sort_order ASC, created_a
 
 <?php else: ?>
 <div class="row g-3">
-    <?php while ($img = $images->fetch_assoc()): ?>
+    <?php while ($img = $images->fetch_assoc()): 
+        // Handle both Cloudinary URLs and old local paths
+        $display_src = $img['image_path'];
+        if (strpos($img['image_path'], 'http') === false) {
+            $display_src = SITE_URL . '/public/assets/images/uploads/' . $img['image_path'];
+        }
+    ?>
     <div class="col-md-3 col-sm-4 col-6">
         <div class="gallery-admin-card">
-            <img src="<?= SITE_URL ?>/public/assets/images/uploads/<?= $img['image_path'] ?>"
-                 alt="<?= $img['caption'] ?>"
+            <img src="<?= $display_src ?>"
+                 alt="<?= htmlspecialchars($img['caption']) ?>"
                  class="img-fluid w-100">
             <div class="gallery-admin-overlay">
                 <div class="text-white small mb-2">
-                    <?= !empty($img['caption']) ? $img['caption'] : 'No caption' ?>
+                    <?= !empty($img['caption']) ? htmlspecialchars($img['caption']) : 'No caption' ?>
                 </div>
                 <a href="<?= SITE_URL ?>/admin/gallery.php?delete=<?= $img['id'] ?>"
                    class="btn btn-sm btn-danger"
