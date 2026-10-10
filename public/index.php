@@ -1,5 +1,4 @@
 <?php
-
 $page_title = "Welcome";
 require_once '../includes/header.php';
 
@@ -11,7 +10,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
 <section class="hero">
     <div class="container text-center">
         <p class="section-subtitle text-white mb-3">Welcome to</p>
-        <h1 class="mb-4"><?= $site_name ?></h1>
+        <h1 class="mb-4"><?= htmlspecialchars($site_name) ?></h1>
         <p class="mb-5 mx-auto" style="max-width:600px;">
             Experience comfort, elegance, and warm hospitality in the heart of Johannesburg.
             Your perfect home away from home awaits.
@@ -37,16 +36,16 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Check-out Date</label>
-                <input type="date" name="check_in" class="form-control" min="<?= date('Y-m-d', strtotime('+1 day')) ?>" required>
+                <input type="date" name="check_out" class="form-control" min="<?= date('Y-m-d', strtotime('+1 day')) ?>" required>
             </div>
 
             <div class="col-md-2">
                 <label class="form-label fw-semibold">Guests</label>
                 <select name="guests" class="form-select">
                     <option value="1">1 Guest</option>
-                    <option value="2" selected>2 Guest</option>
-                    <option value="3">3 Guest</option>
-                    <option value="4">4 Guest</option>
+                    <option value="2" selected>2 Guests</option>
+                    <option value="3">3 Guests</option>
+                    <option value="4">4 Guests</option>
                 </select>
             </div>
 
@@ -58,7 +57,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
                     $all_rooms = $conn->query("SELECT id, name FROM rooms WHERE is_active = 1");
                     while ($r = $all_rooms->fetch_assoc()):
                     ?>
-                    <option value="<?= $r['id'] ?>"><?= $r['name'] ?></option>
+                    <option value="<?= $r['id'] ?>"><?= htmlspecialchars($r['name']) ?></option>
                     <?php endwhile; ?>
                 </select>
             </div>
@@ -73,7 +72,6 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
 </section>
 
 <!-- The "Why Choose Us" Section -->
-
 <section class="py-6 bg-white">
     <div class="container text-center">
         <p class="section-subtitle">Why Choose Us</p>
@@ -82,36 +80,28 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
         <div class="row g-4">
             <div class="col-md-3">
                 <div class="feature-box p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="bi bi-house-heart"></i>
-                    </div>
+                    <div class="feature-icon mb-3"><i class="bi bi-house-heart"></i></div>
                     <h5>Homely Comfort</h5>
                     <p class="text-muted small">Warm, welcoming rooms designed to make you feel right at home.</p>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="feature-box p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="bi bi-wifi"></i>
-                    </div>
+                    <div class="feature-icon mb-3"><i class="bi bi-wifi"></i></div>
                     <h5>Free WiFi</h5>
                     <p class="text-muted small">Stay connected with high-speed internet throughout the property.</p>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="feature-box p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="bi bi-shield-check"></i>
-                    </div>
+                    <div class="feature-icon mb-3"><i class="bi bi-shield-check"></i></div>
                     <h5>Safe & Secure</h5>
                     <p class="text-muted small">24/7 security so you can relax and enjoy your stay with peace of mind.</p>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="feature-box p-4">
-                    <div class="feature-icon mb-3">
-                        <i class="bi bi-geo-alt"></i>
-                    </div>
+                    <div class="feature-icon mb-3"><i class="bi bi-geo-alt"></i></div>
                     <h5>Great Location</h5>
                     <p class="text-muted small">Centrally located with easy access to restaurants, shops and attractions.</p>
                 </div>
@@ -130,15 +120,18 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
             <?php while ($room = $rooms_result->fetch_assoc()): ?>
             <div class="col-md-4">
                 <div class="card room-card h-100">
-                    <!-- Room Image -->
-                    <img src="<?= !empty($room['image'])
-                        ? SITE_URL . '/public/assets/images/uploads/' . $room['image']
-                        : SITE_URL . '/public/assets/images/room-placeholder.jpg' ?>"
-                        alt="<?= $room['name'] ?>"
-                        class="card-img-top">
+                    <!-- Room Image (Cloudinary Safe) -->
+                    <?php 
+                    $room_img = !empty($room['image']) 
+                        ? ((strpos($room['image'], 'http') === 0) ? $room['image'] : SITE_URL . '/public/assets/images/uploads/' . $room['image'])
+                        : SITE_URL . '/public/assets/images/room-placeholder.jpg'; 
+                    ?>
+                    <img src="<?= $room_img ?>" alt="<?= htmlspecialchars($room['name']) ?>" class="card-img-top">
+                    
                     <div class="card-body text-start p-4">
-                        <h5 class="card-title"><?= $room['name'] ?></h5>
-                        <p class="text-muted small mb-3"><?= $room['description'] ?></p>
+                        <h5 class="card-title"><?= htmlspecialchars($room['name']) ?></h5>
+                        <p class="text-muted small mb-3"><?= htmlspecialchars($room['description']) ?></p>
+                        
                         <!-- Amenities -->
                         <div class="d-flex flex-wrap gap-1 mb-3">
                             <?php
@@ -148,13 +141,13 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
                             <span class="amenity-badge"><?= trim($amenity) ?></span>
                             <?php endforeach; ?>
                         </div>
+                        
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="room-price"><?= formatPrice($room['price_per_night']) ?></span>
                                 <span class="text-muted small"> / night</span>
                             </div>
-                            <a href="<?= SITE_URL ?>/public/booking.php?room_id=<?= $room['id'] ?>" 
-                               class="btn btn-primary btn-sm px-3">
+                            <a href="<?= SITE_URL ?>/public/booking.php?room_id=<?= $room['id'] ?>" class="btn btn-primary btn-sm px-3">
                                 Book Room
                             </a>
                         </div>
@@ -176,7 +169,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 LIMIT 3");
     <div class="container">
         <h2 class="mb-3">Ready for an Unforgettable Stay?</h2>
         <p class="mb-4 opacity-75">Book directly with us for the best rates - no hidden fees, no booking charges.</p>
-        <a href="<?= SITE_URL ?>/booking.php" class="btn btn-light btn-lg px-5 text-primary fw-semibold">
+        <a href="<?= SITE_URL ?>/public/booking.php" class="btn btn-light btn-lg px-5 text-primary fw-semibold">
             Book Your Stay Today
         </a>
     </div>

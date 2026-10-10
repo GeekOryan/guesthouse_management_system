@@ -1,26 +1,29 @@
 <?php
-// ============================================================
-//  admin/theme.php
-//  Theme customisation — colours, fonts, dark mode
-// ============================================================
-
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php'; // Load Cloudinary SDK
+
+use Cloudinary\Cloudinary;
+use Cloudinary\Configuration\Configuration;
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Initialize Cloudinary
+Configuration::instance([
+    'cloud' => [
+        'cloud_name' => getenv('CLOUDINARY_CLOUD_NAME'),
+        'api_key'    => getenv('CLOUDINARY_API_KEY'),
+        'api_secret' => getenv('CLOUDINARY_API_SECRET'),
+    ],
+]);
+$cloudinary = new Cloudinary();
+
 // --- Save theme settings ------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fields = [
-        'theme_color',
-        'theme_color_dark',
-        'theme_bg',
-        'theme_font',
-        'dark_mode',
-    ];
+    $fields = ['theme_color', 'theme_color_dark', 'theme_bg', 'theme_font', 'dark_mode'];
 
     foreach ($fields as $field) {
         $value = isset($_POST[$field]) ? sanitize($_POST[$field]) : '0';
@@ -30,29 +33,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
     }
 
-    // --- Handle logo upload ---------------------------------
+    // --- Handle logo upload via Cloudinary ------------------
+    $upload_error = '';
     if (isset($_FILES['site_logo']) && $_FILES['site_logo']['error'] === 0) {
-        $file    = $_FILES['site_logo'];
-        $ext     = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $file = $_FILES['site_logo'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'webp', 'svg'];
 
         if (in_array($ext, $allowed) && $file['size'] <= 2 * 1024 * 1024) {
-            $old_logo = getSetting('site_logo');
-            if (!empty($old_logo) && file_exists(UPLOAD_PATH . '/' . $old_logo)) {
-                unlink(UPLOAD_PATH . '/' . $old_logo);
-            }
-            $filename = 'logo_' . uniqid() . '.' . $ext;
-            if (!is_dir(UPLOAD_PATH)) mkdir(UPLOAD_PATH, 0755, true);
-            if (move_uploaded_file($file['tmp_name'], UPLOAD_PATH . '/' . $filename)) {
+            try {
+                $uploadResult = $cloudinary->uploadApi()->upload($file['tmp_name'], [
+                    'folder' => 'guesthouse/logo',
+                    'public_id' => 'site_logo_' . uniqid(),
+                    'overwrite' => true,
+                    'resource_type' => 'image'
+                ]);
+                
+                $logo_url = $uploadResult['secure_url'];
+
                 $stmt = $conn->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = 'site_logo'");
-                $stmt->bind_param("s", $filename);
+                $stmt->bind_param("s", $logo_url);
                 $stmt->execute();
                 $stmt->close();
+            } catch (Exception $e) {
+                $upload_error = "Logo upload failed: " . $e->getMessage();
             }
+        } else {
+            $upload_error = "Invalid file type or size (Max 2MB).";
         }
     }
 
-    header("Location: " . SITE_URL . "/admin/theme.php?saved=1");
+    $redirect_url = SITE_URL . "/admin/theme.php?saved=1";
+    if ($upload_error) $redirect_url .= "&error=" . urlencode($upload_error);
+    
+    header("Location: " . $redirect_url);
     exit();
 }
 

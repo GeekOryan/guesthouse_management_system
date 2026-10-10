@@ -3,6 +3,7 @@
   "description": "Guesthouse Management System",
   "type": "project",
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.0",
+    "cloudinary/cloudinary_php": "^2.0"
   }
 }

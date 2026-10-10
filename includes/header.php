@@ -25,7 +25,7 @@ $site_email = getSetting('site_email');
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?= SITE_URL ?>/public/assets/css/style.css" rel="stylesheet">
+       <link href="<?= SITE_URL ?>/public/assets/css/style.css?v=<?= time() ?>" rel="stylesheet">
 
     <?php
     // Fetching the theme settings
@@ -79,7 +79,13 @@ section.bg-white { background: #141428 !important; }
 .navbar-brand::before {
     content: '';
     display: inline-block;
-    background: url('<?= SITE_URL ?>/public/assets/images/uploads/<?= htmlspecialchars($site_logo) ?>') no-repeat center/contain;
+    <?php 
+    // Check if it's a full Cloudinary URL or a local path
+    $logo_src = (strpos($site_logo, 'http') === 0) 
+        ? htmlspecialchars($site_logo) 
+        : SITE_URL . '/public/assets/images/uploads/' . htmlspecialchars($site_logo); 
+    ?>
+    background: url('<?= $logo_src ?>') no-repeat center/contain;
     width: 120px;
     height: 40px;
     vertical-align: middle;

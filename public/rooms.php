@@ -1,7 +1,6 @@
 <?php
-
-//  public/rooms.php
-//  Rooms & Rates page — lists all active rooms from the DB
+// public/rooms.php
+// Rooms & Rates page — lists all active rooms from the DB
 
 $page_title = "Rooms & Rates";
 require_once '../includes/header.php';
@@ -22,7 +21,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 ORDER BY p
     </div>
 </section>
 
-<!--ROOMS LISTING -->
+<!-- ROOMS LISTING -->
 <section class="py-6">
     <div class="container">
 
@@ -38,6 +37,11 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 ORDER BY p
         <div class="row g-4">
             <?php while ($room = $rooms_result->fetch_assoc()): 
                 $amenities = explode(',', $room['amenities']);
+                
+                // Cloudinary Safe Image Logic
+                $room_img = !empty($room['image']) 
+                    ? ((strpos($room['image'], 'http') === 0) ? $room['image'] : SITE_URL . '/public/assets/images/uploads/' . $room['image'])
+                    : SITE_URL . '/public/assets/images/room-placeholder.jpg';
             ?>
             <div class="col-lg-12">
                 <div class="card room-card-horizontal">
@@ -45,10 +49,8 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 ORDER BY p
 
                         <!-- Room Image -->
                         <div class="col-md-4">
-                            <img src="<?= !empty($room['image'])
-                                ? SITE_URL . '/public/assets/images/uploads/' . $room['image']
-                                : SITE_URL . '/public/assets/images/room-placeholder.jpg' ?>"
-                                alt="<?= $room['name'] ?>"
+                            <img src="<?= $room_img ?>"
+                                alt="<?= htmlspecialchars($room['name']) ?>"
                                 class="img-fluid h-100 w-100"
                                 style="object-fit:cover; min-height:250px;">
                         </div>
@@ -58,7 +60,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 ORDER BY p
                             <div class="card-body p-4 h-100 d-flex flex-column">
 
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h3 class="card-title mb-0"><?= $room['name'] ?></h3>
+                                    <h3 class="card-title mb-0"><?= htmlspecialchars($room['name']) ?></h3>
                                     <div class="text-end">
                                         <div class="room-price"><?= formatPrice($room['price_per_night']) ?></div>
                                         <small class="text-muted">per night</small>
@@ -72,7 +74,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 ORDER BY p
                                 </p>
 
                                 <!-- Description -->
-                                <p class="text-muted mb-4"><?= $room['description'] ?></p>
+                                <p class="text-muted mb-4"><?= htmlspecialchars($room['description']) ?></p>
 
                                 <!-- Amenities -->
                                 <div class="mb-4">
@@ -109,7 +111,7 @@ $rooms_result = $conn->query("SELECT * FROM rooms WHERE is_active = 1 ORDER BY p
     </div>
 </section>
 
-<!--CALL TO ACTION -->
+<!-- CALL TO ACTION -->
 <section class="cta-section py-5 text-white text-center">
     <div class="container">
         <h3 class="mb-3">Not Sure Which Room to Choose?</h3>
