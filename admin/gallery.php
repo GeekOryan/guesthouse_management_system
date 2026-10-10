@@ -5,33 +5,8 @@ require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Cloudinary\Cloudinary;
-use Cloudinary\Configuration\Configuration;
 
-// --- ULTRA-DEBUG SAFETY CHECK ---
-// We use trim() to remove any accidental invisible spaces copied from Render
-$cn = trim(getenv('CLOUDINARY_CLOUD_NAME') ?: '');
-$ak = trim(getenv('CLOUDINARY_API_KEY') ?: '');
-$as = trim(getenv('CLOUDINARY_API_SECRET') ?: '');
-
-if (!$cn || !$ak || !$as) {
-    die("<h2 style='color:red;'>CRITICAL: Missing Environment Variables</h2>
-         <p>PHP cannot see your Cloudinary credentials. Please check your Render Dashboard.</p>
-         <ul>
-         <li>CLOUDINARY_CLOUD_NAME: '" . htmlspecialchars($cn) . "' (Length: " . strlen($cn) . ")</li>
-         <li>CLOUDINARY_API_KEY: '" . htmlspecialchars($ak) . "' (Length: " . strlen($ak) . ")</li>
-         <li>CLOUDINARY_API_SECRET: '" . ($as ? '*** EXISTS ***' : 'MISSING') . "' (Length: " . strlen($as) . ")</li>
-         </ul>
-         <p><strong>Fix:</strong> Go to Render > Environment, delete these 3 variables, and re-add them carefully. Ensure NO spaces before or after the values.</p>");
-}
-
-// Initialize Cloudinary with the trimmed, clean variables
-Configuration::instance([
-    'cloud' => [
-        'cloud_name' => $cn,
-        'api_key'    => $ak,
-        'api_secret' => $as,
-    ],
-]);
+// The SDK automatically reads the CLOUDINARY_URL environment variable!
 $cloudinary = new Cloudinary();
 
 // DELETE an image
