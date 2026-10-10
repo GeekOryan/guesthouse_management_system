@@ -1,6 +1,3 @@
-# Sensitive Config : Never Push This
-config/config.php
-
 # Uploaded Images : Too large for git
 public/assets/images/uploads/
 
