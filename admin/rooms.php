@@ -2,24 +2,40 @@
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/vendor/autoload.php'; // Load Cloudinary SDK
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Cloudinary\Cloudinary;
-use Cloudinary\Configuration\Configuration;
 
-// Initialize Cloudinary
-Configuration::instance([
+// Read and TRIM the 3 separate environment variables
+$cloudName = trim(getenv('CLOUDINARY_CLOUD_NAME') ?: '');
+$apiKey    = trim(getenv('CLOUDINARY_API_KEY') ?: '');
+$apiSecret = trim(getenv('CLOUDINARY_API_SECRET') ?: '');
+
+// Initialize Cloudinary DIRECTLY in the constructor (The magic fix)
+$cloudinary = new Cloudinary([
     'cloud' => [
-        'cloud_name' => getenv('CLOUDINARY_CLOUD_NAME'),
-        'api_key'    => getenv('CLOUDINARY_API_KEY'),
-        'api_secret' => getenv('CLOUDINARY_API_SECRET'),
-    ],
+        'cloud_name' => $cloudName,
+        'api_key'    => $apiKey,
+        'api_secret' => $apiSecret,
+    ]
 ]);
-$cloudinary = new Cloudinary();
 
 // DELETE a room 
 if (isset($_GET['delete'])) {
     $id = (int)$_GET['delete'];
+    
+    // Optional: Delete image from Cloudinary when room is deleted
+    $result = $conn->query("SELECT image FROM rooms WHERE id = $id");
+    if ($result->num_rows > 0) {
+        $room = $result->fetch_assoc();
+        if (strpos($room['image'], 'cloudinary.com') !== false) {
+            try {
+                preg_match('/upload\/v\d+\/(.+)$/', $room['image'], $matches);
+                if (isset($matches[1])) $cloudinary->uploadApi()->destroy($matches[1]);
+            } catch (Exception $e) {}
+        }
+    }
+    
     $conn->query("DELETE FROM rooms WHERE id = $id");
     header("Location: " . SITE_URL . "/admin/rooms.php?deleted=1");
     exit();
@@ -56,6 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (Exception $e) {
                 $error_msg = "Image upload failed: " . $e->getMessage();
             }
+        } else {
+            $error_msg = "Invalid file type or size (Max 2MB).";
         }
     }
 
@@ -141,8 +159,7 @@ $rooms = $conn->query("SELECT * FROM rooms ORDER BY created_at DESC");
                         </td>
                         <td>
                             <?php if (!empty($room['image'])): ?>
-                                <?php $img_src = (strpos($room['image'], 'http') === 0) ? $room['image'] : SITE_URL . '/public/assets/images/uploads/' . $room['image']; ?>
-                                <img src="<?= $img_src ?>" alt="Room" style="max-height: 50px; border-radius: 4px;">
+                                <img src="<?= htmlspecialchars($room['image']) ?>" alt="Room" style="max-height: 50px; border-radius: 4px;">
                             <?php else: ?>
                                 <span class="text-muted small">No image</span>
                             <?php endif; ?>
@@ -180,7 +197,6 @@ $rooms = $conn->query("SELECT * FROM rooms ORDER BY created_at DESC");
 <div class="modal fade" id="roomModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <!-- IMPORTANT: enctype is required for file uploads -->
             <form method="POST" enctype="multipart/form-data">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitle"><i class="bi bi-door-open me-2"></i>Add New Room</h5>
@@ -259,11 +275,9 @@ document.querySelectorAll('.edit-btn').forEach(function(btn) {
         document.getElementById('field-amenities').value = this.dataset.amenities;
         document.getElementById('field-active').checked = this.dataset.active === '1';
         
-        // Show existing image preview if it exists
         const imgPreview = document.getElementById('modal-image-preview');
         if (this.dataset.image) {
-            const imgSrc = this.dataset.image.startsWith('http') ? this.dataset.image : '<?= SITE_URL ?>/public/assets/images/uploads/' + this.dataset.image;
-            imgPreview.src = imgSrc;
+            imgPreview.src = this.dataset.image;
             imgPreview.classList.remove('d-none');
         } else {
             imgPreview.classList.add('d-none');
