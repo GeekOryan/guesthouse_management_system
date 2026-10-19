@@ -2,28 +2,37 @@
 require_once dirname(__DIR__) . '/config/config.php';
 require_once dirname(__DIR__) . '/includes/db.php';
 require_once dirname(__DIR__) . '/includes/functions.php';
-require_once dirname(__DIR__) . '/vendor/autoload.php'; // Load Cloudinary SDK
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Cloudinary\Cloudinary;
-use Cloudinary\Configuration\Configuration;
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Initialize Cloudinary
-Configuration::instance([
+// Read and TRIM the 3 separate environment variables
+$cloudName = trim(getenv('CLOUDINARY_CLOUD_NAME') ?: '');
+$apiKey    = trim(getenv('CLOUDINARY_API_KEY') ?: '');
+$apiSecret = trim(getenv('CLOUDINARY_API_SECRET') ?: '');
+
+// Initialize Cloudinary DIRECTLY in the constructor
+$cloudinary = new Cloudinary([
     'cloud' => [
-        'cloud_name' => getenv('CLOUDINARY_CLOUD_NAME'),
-        'api_key'    => getenv('CLOUDINARY_API_KEY'),
-        'api_secret' => getenv('CLOUDINARY_API_SECRET'),
-    ],
+        'cloud_name' => $cloudName,
+        'api_key'    => $apiKey,
+        'api_secret' => $apiSecret,
+    ]
 ]);
-$cloudinary = new Cloudinary();
 
 // --- Save theme settings ------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fields = ['theme_color', 'theme_color_dark', 'theme_bg', 'theme_font', 'dark_mode'];
+    $fields = [
+        'theme_color',
+        'theme_color_dark',
+        'theme_bg',
+        'theme_font',
+        'dark_mode',
+    ];
 
     foreach ($fields as $field) {
         $value = isset($_POST[$field]) ? sanitize($_POST[$field]) : '0';
@@ -111,14 +120,20 @@ $presets = [
 </div>
 <?php endif; ?>
 
+<?php if (isset($_GET['error'])): ?>
+<div class="alert alert-danger alert-dismissible fade show mb-4">
+    <i class="bi bi-exclamation-triangle me-2"></i><?= htmlspecialchars($_GET['error']) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php endif; ?>
+
 <!-- ===================== PAGE TITLE ====================== -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="fw-bold mb-1">Theme & Appearance</h4>
         <p class="text-muted small mb-0">Customise how your guesthouse website looks</p>
     </div>
-    <a href="<?= SITE_URL ?>/public/index.php" target="_blank"
-       class="btn btn-outline-primary btn-sm">
+    <a href="<?= SITE_URL ?>/public/index.php" target="_blank" class="btn btn-outline-primary btn-sm">
         <i class="bi bi-eye me-1"></i>Preview Website
     </a>
 </div>
@@ -138,23 +153,17 @@ $presets = [
                 <div class="row g-4">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Primary Colour</label>
-                        <input type="color" name="theme_color" id="theme_color"
-                               class="form-control form-control-color w-100"
-                               value="<?= htmlspecialchars($theme['theme_color']) ?>">
+                        <input type="color" name="theme_color" id="theme_color" class="form-control form-control-color w-100" value="<?= htmlspecialchars($theme['theme_color']) ?>">
                         <div class="form-text">Buttons, links, badges, accents</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Primary Dark</label>
-                        <input type="color" name="theme_color_dark" id="theme_color_dark"
-                               class="form-control form-control-color w-100"
-                               value="<?= htmlspecialchars($theme['theme_color_dark']) ?>">
+                        <input type="color" name="theme_color_dark" id="theme_color_dark" class="form-control form-control-color w-100" value="<?= htmlspecialchars($theme['theme_color_dark']) ?>">
                         <div class="form-text">Hover states and darker accents</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Background Colour</label>
-                        <input type="color" name="theme_bg" id="theme_bg"
-                               class="form-control form-control-color w-100"
-                               value="<?= htmlspecialchars($theme['theme_bg']) ?>">
+                        <input type="color" name="theme_bg" id="theme_bg" class="form-control form-control-color w-100" value="<?= htmlspecialchars($theme['theme_bg']) ?>">
                         <div class="form-text">Page background colour</div>
                     </div>
                 </div>
@@ -164,13 +173,7 @@ $presets = [
                     <label class="form-label fw-semibold">Quick Presets</label>
                     <div class="d-flex flex-wrap gap-2 mt-1">
                         <?php foreach ($presets as $p): ?>
-                        <button type="button" class="preset-btn"
-                                style="background:<?= $p['primary'] ?>;"
-                                data-primary="<?= $p['primary'] ?>"
-                                data-dark="<?= $p['dark'] ?>"
-                                data-bg="<?= $p['bg'] ?>"
-                                title="<?= $p['name'] ?>">
-                        </button>
+                        <button type="button" class="preset-btn" style="background:<?= $p['primary'] ?>;" data-primary="<?= $p['primary'] ?>" data-dark="<?= $p['dark'] ?>" data-bg="<?= $p['bg'] ?>" title="<?= $p['name'] ?>"></button>
                         <?php endforeach; ?>
                     </div>
                     <div class="form-text mt-1">Click a preset to apply it instantly — then save.</div>
@@ -187,20 +190,11 @@ $presets = [
                 <div class="row g-3">
                     <?php foreach ($fonts as $value => $label): ?>
                     <div class="col-md-4">
-                        <label class="font-option <?= $theme['theme_font'] === $value ? 'selected' : '' ?>"
-                               for="font_<?= str_replace(' ', '_', $value) ?>">
-                            <input type="radio" name="theme_font"
-                                   value="<?= $value ?>"
-                                   id="font_<?= str_replace(' ', '_', $value) ?>"
-                                   <?= $theme['theme_font'] === $value ? 'checked' : '' ?>
-                                   class="d-none">
-                            <div class="font-preview" style="font-family:'<?= $value ?>',sans-serif;">
-                                Aa
-                            </div>
+                        <label class="font-option <?= $theme['theme_font'] === $value ? 'selected' : '' ?>" for="font_<?= str_replace(' ', '_', $value) ?>">
+                            <input type="radio" name="theme_font" value="<?= $value ?>" id="font_<?= str_replace(' ', '_', $value) ?>" <?= $theme['theme_font'] === $value ? 'checked' : '' ?> class="d-none">
+                            <div class="font-preview" style="font-family:'<?= $value ?>',sans-serif;">Aa</div>
                             <div class="fw-semibold small mt-2"><?= $value ?></div>
-                            <div style="font-family:'<?= $value ?>',sans-serif;font-size:0.75rem;color:#888;">
-                                The quick brown fox
-                            </div>
+                            <div style="font-family:'<?= $value ?>',sans-serif;font-size:0.75rem;color:#888;">The quick brown fox</div>
                         </label>
                     </div>
                     <?php endforeach; ?>
@@ -217,25 +211,15 @@ $presets = [
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <div class="fw-semibold mb-1">Enable Dark Mode</div>
-                        <div class="text-muted small">
-                            Applies a dark background to both the public website and admin panel
-                        </div>
+                        <div class="text-muted small">Applies a dark background to both the public website and admin panel</div>
                     </div>
-                    <!-- FIX: dark mode toggle is now correctly inside the card -->
                     <div class="form-check form-switch ms-4">
-                        <input class="form-check-input" type="checkbox"
-                               name="dark_mode" id="dark_mode"
-                               value="1"
-                               style="width:3rem; height:1.5rem;"
-                               <?= $theme['dark_mode'] === '1' ? 'checked' : '' ?>>
+                        <input class="form-check-input" type="checkbox" name="dark_mode" id="dark_mode" value="1" style="width:3rem; height:1.5rem;" <?= $theme['dark_mode'] === '1' ? 'checked' : '' ?>>
                     </div>
                 </div>
                 <!-- Dark mode preview box -->
-                <div class="p-3 rounded" id="darkPreview"
-                     style="background:<?= $theme['dark_mode']==='1' ? '#1a1a2e' : '#ffffff' ?>;
-                            border:1px solid #ddd; transition:background 0.3s;">
-                    <span id="darkPreviewText"
-                          style="color:<?= $theme['dark_mode']==='1' ? '#ffffff' : '#333333' ?>;">
+                <div class="p-3 rounded" id="darkPreview" style="background:<?= $theme['dark_mode']==='1' ? '#1a1a2e' : '#ffffff' ?>; border:1px solid #ddd; transition:background 0.3s;">
+                    <span id="darkPreviewText" style="color:<?= $theme['dark_mode']==='1' ? '#ffffff' : '#333333' ?>;">
                         <i class="bi bi-<?= $theme['dark_mode']==='1' ? 'moon-stars-fill' : 'sun' ?> me-2"></i>
                         <?= $theme['dark_mode']==='1' ? 'Dark mode is ON' : 'Dark mode is OFF' ?>
                     </span>
@@ -256,9 +240,7 @@ $presets = [
             <div class="card-body p-4">
                 <div class="text-center mb-3">
                     <?php if (!empty($theme['site_logo'])): ?>
-                    <img src="<?= SITE_URL ?>/public/assets/images/uploads/<?= $theme['site_logo'] ?>"
-                         alt="Current Logo" id="logoPreview"
-                         style="max-height:80px;max-width:100%;object-fit:contain;">
+                    <img src="<?= htmlspecialchars($theme['site_logo']) ?>" alt="Current Logo" id="logoPreview" style="max-height:80px;max-width:100%;object-fit:contain;">
                     <?php else: ?>
                     <div id="logoPreview" class="text-muted small py-3">
                         <i class="bi bi-image d-block mb-1" style="font-size:2rem;"></i>
@@ -266,8 +248,7 @@ $presets = [
                     </div>
                     <?php endif; ?>
                 </div>
-                <input type="file" name="site_logo" id="site_logo"
-                       class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg">
+                <input type="file" name="site_logo" id="site_logo" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg">
                 <div class="form-text mt-1">PNG or SVG recommended. Max 2MB.</div>
             </div>
         </div>
@@ -278,31 +259,22 @@ $presets = [
                 <i class="bi bi-eye me-2"></i>Live Colour Preview
             </div>
             <div class="card-body p-2">
-                <div id="colorPreview"
-                     style="background:<?= $theme['theme_bg'] ?>;border-radius:6px;overflow:hidden;">
+                <div id="colorPreview" style="background:<?= $theme['theme_bg'] ?>;border-radius:6px;overflow:hidden;">
                     <!-- Mini navbar -->
                     <div style="background:#1a1a2e;padding:8px 12px;display:flex;align-items:center;gap:8px;">
                         <div style="width:10px;height:10px;border-radius:50%;background:<?= $theme['theme_color'] ?>;"></div>
                         <div style="background:#333;height:6px;width:60px;border-radius:3px;"></div>
                         <div style="margin-left:auto;">
-                            <div id="previewBtn"
-                                 style="background:<?= $theme['theme_color'] ?>;color:white;font-size:8px;padding:3px 8px;border-radius:3px;">
-                                Book Now
-                            </div>
+                            <div id="previewBtn" style="background:<?= $theme['theme_color'] ?>;color:white;font-size:8px;padding:3px 8px;border-radius:3px;">Book Now</div>
                         </div>
                     </div>
                     <!-- Mini hero -->
                     <div style="background:linear-gradient(<?= $theme['theme_color'] ?>88,<?= $theme['theme_color'] ?>44);padding:20px 12px;text-align:center;">
-                        <div id="previewHeroText"
-                             style="color:white;font-size:10px;font-weight:bold;font-family:'<?= $theme['theme_font'] ?>',sans-serif;">
-                            Your Guesthouse Name
-                        </div>
+                        <div id="previewHeroText" style="color:white;font-size:10px;font-weight:bold;font-family:'<?= $theme['theme_font'] ?>',sans-serif;">Your Guesthouse Name</div>
                     </div>
                     <!-- Mini content -->
                     <div style="padding:10px 12px;">
-                        <div id="previewAccent"
-                             style="height:4px;width:40px;border-radius:2px;background:<?= $theme['theme_color'] ?>;margin-bottom:6px;">
-                        </div>
+                        <div id="previewAccent" style="height:4px;width:40px;border-radius:2px;background:<?= $theme['theme_color'] ?>;margin-bottom:6px;"></div>
                         <div style="background:#ddd;height:6px;border-radius:3px;margin-bottom:4px;width:80%;"></div>
                         <div style="background:#ddd;height:6px;border-radius:3px;width:60%;"></div>
                     </div>
@@ -322,44 +294,13 @@ $presets = [
 </form>
 
 <style>
-.preset-btn {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s;
-}
-.preset-btn:hover {
-    transform: scale(1.2);
-    border-color: #fff;
-    box-shadow: 0 0 0 2px #aaa;
-}
-.font-option {
-    display: block;
-    border: 2px solid #eee;
-    border-radius: 8px;
-    padding: 16px 12px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-}
+.preset-btn { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+.preset-btn:hover { transform: scale(1.2); border-color: #fff; box-shadow: 0 0 0 2px #aaa; }
+.font-option { display: block; border: 2px solid #eee; border-radius: 8px; padding: 16px 12px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
 .font-option:hover  { border-color: var(--primary); }
-.font-option.selected {
-    border-color: var(--primary);
-    background: #faf7f0;
-}
-.font-preview {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--dark);
-    line-height: 1;
-}
-.form-control-color {
-    height: 50px;
-    padding: 4px;
-    border-radius: 8px;
-    cursor: pointer;
-}
+.font-option.selected { border-color: var(--primary); background: #faf7f0; }
+.font-preview { font-size: 2.5rem; font-weight: 700; color: var(--dark); line-height: 1; }
+.form-control-color { height: 50px; padding: 4px; border-radius: 8px; cursor: pointer; }
 </style>
 
 <?php require_once 'includes/admin_footer.php'; ?>
@@ -400,9 +341,7 @@ document.querySelectorAll('.preset-btn').forEach(function(btn) {
 // Font card selection
 document.querySelectorAll('.font-option').forEach(function(card) {
     card.addEventListener('click', function() {
-        document.querySelectorAll('.font-option').forEach(function(c) {
-            c.classList.remove('selected');
-        });
+        document.querySelectorAll('.font-option').forEach(function(c) { c.classList.remove('selected'); });
         this.classList.add('selected');
         updatePreview();
     });
