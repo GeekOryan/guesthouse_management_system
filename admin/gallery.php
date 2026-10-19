@@ -5,7 +5,6 @@ require_once dirname(__DIR__) . '/includes/functions.php';
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Cloudinary\Cloudinary;
-use Cloudinary\Configuration\Configuration;
 
 // Read and TRIM the 3 separate environment variables
 $cloudName = trim(getenv('CLOUDINARY_CLOUD_NAME') ?: '');
@@ -15,23 +14,17 @@ $apiSecret = trim(getenv('CLOUDINARY_API_SECRET') ?: '');
 // Safety check
 if (!$cloudName || !$apiKey || !$apiSecret) {
     die("<h2 style='color:red;'>Missing Cloudinary Environment Variables</h2>
-         <p>Please check your Render Dashboard > Environment tab and ensure these 3 variables are set exactly:</p>
-         <ul>
-         <li>CLOUDINARY_CLOUD_NAME</li>
-         <li>CLOUDINARY_API_KEY</li>
-         <li>CLOUDINARY_API_SECRET</li>
-         </ul>");
+         <p>Please check your Render Dashboard > Environment tab.</p>");
 }
 
-// Initialize Cloudinary with the 3 variables
-Configuration::instance([
+// Initialize Cloudinary DIRECTLY in the constructor (Bypasses singleton config issues)
+$cloudinary = new Cloudinary([
     'cloud' => [
         'cloud_name' => $cloudName,
         'api_key'    => $apiKey,
         'api_secret' => $apiSecret,
-    ],
+    ]
 ]);
-$cloudinary = new Cloudinary();
 
 // DELETE an image
 if (isset($_GET['delete'])) {
