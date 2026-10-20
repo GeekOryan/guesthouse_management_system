@@ -10,6 +10,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+requireAdmin();
+
 // Read and TRIM the 3 separate environment variables
 $cloudName = trim(getenv('CLOUDINARY_CLOUD_NAME') ?: '');
 $apiKey    = trim(getenv('CLOUDINARY_API_KEY') ?: '');
