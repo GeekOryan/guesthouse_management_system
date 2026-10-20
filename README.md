@@ -7,7 +7,9 @@ This project was built as a portfolio piece and as a practical solution that can
 ---
 
 ## Live Demo
-https://yvessaintoryanguesthouse.infinityfree.me
+**[https://guesthouse-management-system.onrender.com](https://guesthouse-management-system.onrender.com)**
+*(Note: Hosted on Render's free tier. The first visit may take 30-50 seconds to wake up the server. Subsequent visits are instant.)*
+ 
  
 ## Features
  
@@ -50,7 +52,8 @@ guesthouse/
 │   └── logout.php          
 ├── config/
 │   ├── config.example.php  
-│   └── config.php          
+│   ├── config.php          
+│   └── isrgrootx1.pem      
 ├── includes/
 │   ├── db.php              
 │   ├── functions.php       
@@ -66,6 +69,8 @@ guesthouse/
 │   └── assets/             
 ├── sql/
 │   └── schema.sql          
+├── Dockerfile              
+├── composer.json           
 └── index.php               
 ```
  
