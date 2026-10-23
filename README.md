@@ -103,9 +103,23 @@ Open the website at http://localhost/guesthouse and access the admin panel at ht
 The system uses 8 tables. The admins table stores admin credentials with bcrypt hashed passwords. The rooms table stores room listings with pricing, capacity and amenities. The bookings table stores every reservation with status tracking. The blocked dates table allows the admin to manually block dates per room. The gallery table stores file paths of uploaded photos. The settings table is a key value store for all site configuration. The contact messages table stores contact form submissions. The failed logins table tracks failed login attempts by IP address for brute force protection.
  
 ---
+
+---
  
+## 🗺️ Future Roadmap
+ 
+This project is actively maintained. Planned future enhancements include:
+- **Automated Email Confirmations:** Integration with PHPMailer/Resend to send automated booking references and receipts to guests.
+- **SMS Notifications:** Twilio API integration for real-time booking alerts to both guests and admin.
+- **Payment Gateway:** Integration with PayFast or Stripe for secure online deposit collection.
+- **OAuth Authentication:** Optional social login (Google/Facebook) for returning guests.
+
+---
+
 ## Author
  
 Oryan : BSc Information Technology, 2026
  
 Built as a portfolio project demonstrating full stack PHP development, relational database design, security implementation and systems thinking. Designed to be pitched to real guesthouse businesses as a practical management solution.
+
+
